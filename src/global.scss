@@ -24,3 +24,46 @@
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
+
+/* Leaflet Library Style*/
+@import "~leaflet/dist/leaflet.css";
+
+.leaflet-default-icon-path {
+  background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png);
+}
+
+.leaflet-popup-content {
+  text-align: center;
+}
+
+/** Custom Style **/
+@font-face {
+  font-family: 'KUFI';
+  src: url('./assets/fonts/Droid_Arabic_KUFI/DroidKufi-Regular.ttf');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'KUFI Bold';
+  src: url('./assets/fonts/Droid_Arabic_KUFI/DroidKufi-Bold.ttf');
+  font-weight: 700;
+}
+
+* {
+  font-family: 'KUFI', sans-serif !important;
+  direction: rtl;
+  text-align: right;
+  letter-spacing: 0;
+}
+
+ion-card-title {
+  font-family: 'KUFI Bold', sans-serif !important;
+}
+
+ion-popover {
+  --width: auto;
+}
+
+.fw-bold {
+  font-weight: bold;
+}

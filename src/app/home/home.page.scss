@@ -1,27 +1,76 @@
-#container {
-  text-align: center;
+ion-list {
+  padding: 2px;
+  margin-top: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--ion-color-light-shade);
+  box-shadow: 0px 2px 0px -2px rgb(0 0 0 / 10%), 0px 2px 8px 0px rgb(0 0 0 / 8%);
 
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  ion-select {
+    padding: 0 8px;
+
+    ion-item {
+      --padding-start: 8px !important;
+      --inner-padding-end: 0;
+    }
+  }
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+.ion-button {
+  font-family: 'KUFI Bold' !important;
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
+.segment-container {
+  overflow-x: scroll;
 
-  color: #8c8c8c;
+  ion-segment {
+    min-width: fit-content;
 
+    ion-segment-button {
+      min-width: auto;
+      --padding-start: 16px;
+      --padding-end: 16px;
+
+      &::part(indicator-background) {
+        background-color: var(--ion-color-tertiary-tint);
+      }
+
+      &.segment-button-checked.ios {
+        &::part(native) {
+          color: #fff;
+        }
+      }
+    }
+  }
+}
+
+.canvas-container {
+  min-height: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+
+  canvas {
+    height: auto;
+    margin: 25px auto;
+
+    &.age-canvas {
+      max-width: 400px;
+    }
+
+    &.gender-canvas {
+      width: 100% !important;
+      max-width: 450px;
+      max-height: 350px;
+    }
+  }
+}
+
+.map-container {
+  min-height: calc(100vh - 155px);
+  padding: 0;
   margin: 0;
-}
 
-#container a {
-  text-decoration: none;
+  &>div {
+    width: 100%;
+    height: 100%;
+  }
 }

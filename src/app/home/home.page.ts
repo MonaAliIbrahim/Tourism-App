@@ -2,12 +2,11 @@ import { Component } from '@angular/core';
 import * as Leaflet from 'leaflet';
 import * as Locations from '../../data/locations';
 
-interface location {
+interface ILocation {
   id: number;
   title: string;
   description: string;
-  lat: number;
-  lng: number;
+  coordinates: [number, number][] | any[];
 }
 
 @Component({
@@ -18,9 +17,9 @@ interface location {
 export class HomePage {
 
   map!: Leaflet.Map;
-  markerLayerGroup = Leaflet.layerGroup();
   layer: Leaflet.Layer = new Leaflet.Layer();
-  locations!: location[];
+  layerGroup = Leaflet.layerGroup();
+  locations!: ILocation[];
   firstSelectedOption: string = '';
   secondSelectedOption: string = '';
 
@@ -38,19 +37,18 @@ export class HomePage {
     }).addTo(this.map);
 
     // Add Layer Group to Map
-    this.markerLayerGroup.addTo(this.map);
+    this.layerGroup.addTo(this.map);
   }
 
   getFirstOption(e: any) {
     this.firstSelectedOption = e.detail.value;
+
     // clear prev selected values
     this.locations = [];
     this.secondSelectedOption = '';
+
     // Clear prev location markers
-    this.clearMarkerLayerGroup();
-    if (this.layer) {
-      this.layer.remove();
-    }
+    this.clearMap();
 
     switch (this.firstSelectedOption) {
       case '1':
@@ -65,19 +63,70 @@ export class HomePage {
       default:
         this.locations = Locations.locations4;
     }
+  }
+
+  getSecondOption(e: any) {
+    this.secondSelectedOption = e.detail.value;
+
+    // Clear All locations
+    this.clearMap();
 
     // Get marker color
     let color = this.getMarkerColor(this.firstSelectedOption);
 
-    // setTimeout(() => {
-    //   this.addMarkerLayerGroup(color);
-    // }, 1000)
+    if(this.firstSelectedOption !== '3') {
+      if(this.secondSelectedOption == '0') {
+        // الكل
+        this.renderMarkersOnMap(color);
+      }
+      else {
+        // Single selected option
+        let currentPoint: ILocation | undefined = this.locations.find(el => el.id === Number(this.secondSelectedOption));
+        currentPoint ? this.renderMarker(currentPoint, color) : null;
+      }
+    }
+    else {
+      if(this.secondSelectedOption == '0') {
+        // الكل
+        this.renderLinesOnMap(color);
+      }
+      else {
+        // Single selected option
+        var currentLine: ILocation | undefined = this.locations.find(el => el.id === Number(this.secondSelectedOption));
+        currentLine ? this.renderLine(currentLine, color) : null;
+      }
+    }
+
   }
 
-  addMarkerLayerGroup(color: string) {
-    // Add Marker to Layer Group
+  renderMarker(currentPoint: ILocation, color: string) {
+    this.layer = Leaflet.marker([currentPoint.coordinates[0][0], currentPoint.coordinates[0][1]], {
+      icon: new Leaflet.Icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      })
+    }).bindPopup(`
+      <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
+        ${currentPoint.title}
+      </h3>
+      <p style='text-align: center; margin: 0 auto 8px;'>
+        ${currentPoint.description}
+      </p>
+    `).addTo(this.map);
+
+    this.map.fitBounds(currentPoint.coordinates as [number, number][], {maxZoom: 8});
+  }
+
+  renderMarkersOnMap(color: string) {
+    let coordinatesPoints: any[] = [];
+
+    // Add Markers to Layer Group
     this.locations.map((el) => {
-      Leaflet.marker([el.lat, el.lng], {
+      Leaflet.marker([el.coordinates[0][0], el.coordinates[0][1]], {
         icon: new Leaflet.Icon({
           iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -93,53 +142,53 @@ export class HomePage {
         <p style='text-align: center; margin: 0 auto 8px;'>
           ${el.description}
         </p>
-      `).addTo(this.markerLayerGroup);
-    })
+      `).addTo(this.layerGroup);
+
+      coordinatesPoints.push(...el.coordinates);
+    });
+
+    this.map.fitBounds(coordinatesPoints);
   }
 
-  clearMarkerLayerGroup() {
-    if (this.markerLayerGroup) {
-      this.markerLayerGroup.clearLayers();
-    }
+  renderLine(currentLine: any, color: string) {
+    this.layer = Leaflet.polyline(currentLine.coordinates, {color}).bindPopup(`
+    <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
+      ${currentLine.title}
+    </h3>
+    <p style='text-align: center; margin: 0 auto 8px;'>
+      ${currentLine.description}
+    </p>
+  `).addTo(this.map);
+
+    this.map.fitBounds(currentLine.coordinates as [number, number][], {maxZoom: 9});
   }
 
-  getSecondOption(e: any) {
-    this.secondSelectedOption = e.detail.value;
+  renderLinesOnMap(color: string) {
+    let coordinatesLines: [number,number][] = [];
 
-    // Clear All locations
-    this.clearMarkerLayerGroup();
-    if (this.layer) {
-      this.layer.remove();
-    }
-
-    // Get marker color
-    let color = this.getMarkerColor(this.firstSelectedOption);
-
-    if (this.secondSelectedOption == '0') {
-      this.addMarkerLayerGroup(color);
-    } else {
-      // Add Marker of Current selected location
-      var currentLocation = this.locations.find(el => el.id === Number(this.secondSelectedOption));
-    }
-
-    if (currentLocation) {
-      this.layer = Leaflet.marker([currentLocation.lat, currentLocation.lng], {
-        icon: new Leaflet.Icon({
-          iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41]
-        })
-      }).bindPopup(`
+    // Add Lines to Layer Group
+    this.locations.map((el: any) => {
+      Leaflet.polyline(el.coordinates).bindPopup(`
         <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
-          ${currentLocation.title}
+          ${el.title}
         </h3>
         <p style='text-align: center; margin: 0 auto 8px;'>
-          ${currentLocation.description}
+          ${el.description}
         </p>
-      `).addTo(this.map);
+      `).addTo(this.layerGroup);
+
+      coordinatesLines.push(el.coordinates);
+    });
+
+    this.map.fitBounds(coordinatesLines);
+  }
+
+  clearMap() {
+    if(this.layer) {
+      this.layer.remove();
+    }
+    if(this.layerGroup) {
+      this.layerGroup.clearLayers();
     }
   }
 

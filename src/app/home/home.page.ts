@@ -168,14 +168,14 @@ export class HomePage {
       altLineOptions: {styles: [{color, opacity: 0.5, weight: 4}], extendToWaypoints: false, missingRouteTolerance: 5},
       pointMarkerStyle: {color, fillColor: color},
       summaryTemplate: `
-        <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
-          ${currentLine.title}
+        <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 20px'>
+          إتجاهات ${currentLine.title}
         </h3>
       `,
     }).addTo(this.map);
 
-    this.renderMarker(currentLine.coordinates[0][0], currentLine.coordinates[0][1], currentLine.title, currentLine.description, color);
     this.renderMarker(currentLine.coordinates[1][0], currentLine.coordinates[1][1], currentLine.title, currentLine.description, color);
+    this.renderMarker(currentLine.coordinates[0][0], currentLine.coordinates[0][1], currentLine.title, currentLine.description, color);
 
     this.map.fitBounds(currentLine.coordinates as [number, number][], {maxZoom: 8});
   }
@@ -196,13 +196,14 @@ export class HomePage {
         ],
         lineOptions: {styles: [{color, opacity: 0.5, weight: 4}], extendToWaypoints: false, missingRouteTolerance: 5},
         altLineOptions: {styles: [{color, opacity: 0.5, weight: 4}], extendToWaypoints: false, missingRouteTolerance: 5},
+        // formatter: new Leaflet.Routing.Formatter({language: 'ar', distanceTemplate:'',  units: 'metric'}),
       })
       .addTo(this.map);
 
       this.controls.push(control);
 
-      this.renderMarker(el.coordinates[0][0], el.coordinates[0][1], el.title, el.description, color);
       this.renderMarker(el.coordinates[1][0], el.coordinates[1][1], el.title, el.description, color);
+      this.renderMarker(el.coordinates[0][0], el.coordinates[0][1], el.title, el.description, color);
 
       coordinatesLines.push([el.coordinates[0][0], el.coordinates[0][1]]);
       coordinatesLines.push([el.coordinates[0][0], el.coordinates[1][1]]);

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import * as Leaflet from 'leaflet';
+import 'leaflet-routing-machine';
 import * as Locations from '../../data/locations';
 
 interface ILocation {
@@ -19,6 +20,8 @@ export class HomePage {
   map!: Leaflet.Map;
   layer: Leaflet.Layer = new Leaflet.Layer();
   layerGroup = Leaflet.layerGroup();
+  routing!: Leaflet.Routing.Control;
+  controls: Leaflet.Routing.Control[] = [];
   locations!: ILocation[];
   firstSelectedOption: string = '';
   secondSelectedOption: string = '';
@@ -82,7 +85,7 @@ export class HomePage {
       else {
         // Single selected option
         let currentPoint: ILocation | undefined = this.locations.find(el => el.id === Number(this.secondSelectedOption));
-        currentPoint ? this.renderMarker(currentPoint, color) : null;
+        currentPoint ? this.renderMarker(currentPoint.coordinates[0][0], currentPoint.coordinates[0][1], currentPoint.title, currentPoint.description , color) : null;
       }
     }
     else {
@@ -99,8 +102,8 @@ export class HomePage {
 
   }
 
-  renderMarker(currentPoint: ILocation, color: string) {
-    this.layer = Leaflet.marker([currentPoint.coordinates[0][0], currentPoint.coordinates[0][1]], {
+  renderMarker(lat: number, lng: number, title: string, description: string, color: string) {
+    Leaflet.marker([lat, lng], {
       icon: new Leaflet.Icon({
         iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
         shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
@@ -111,14 +114,14 @@ export class HomePage {
       })
     }).bindPopup(`
       <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
-        ${currentPoint.title}
+        ${title}
       </h3>
       <p style='text-align: center; margin: 0 auto 8px;'>
-        ${currentPoint.description}
+        ${description}
       </p>
-    `).addTo(this.map);
+    `).addTo(this.layerGroup).openPopup();
 
-    this.map.fitBounds(currentPoint.coordinates as [number, number][], {maxZoom: 8});
+    this.secondSelectedOption != '3' ? this.map.fitBounds([[lat, lng]] as [number, number][], {maxZoom: 8}) : null;
   }
 
   renderMarkersOnMap(color: string) {
@@ -151,36 +154,61 @@ export class HomePage {
   }
 
   renderLine(currentLine: any, color: string) {
-    this.layer = Leaflet.polyline(currentLine.coordinates, {color}).bindPopup(`
-    <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
-      ${currentLine.title}
-    </h3>
-    <p style='text-align: center; margin: 0 auto 8px;'>
-      ${currentLine.description}
-    </p>
-  `).addTo(this.map);
+    this.routing = Leaflet.Routing.control({
+      show: false,
+      showAlternatives: false,
+      fitSelectedRoutes: false,
+      routeWhileDragging: true,
+      addWaypoints: false,
+      waypoints: [
+        Leaflet.latLng(currentLine.coordinates[0][0], currentLine.coordinates[0][1]),
+        Leaflet.latLng(currentLine.coordinates[1][0], currentLine.coordinates[1][1]),
+      ],
+      lineOptions: {styles: [{color, opacity: 0.5, weight: 4}], extendToWaypoints: false, missingRouteTolerance: 5},
+      altLineOptions: {styles: [{color, opacity: 0.5, weight: 4}], extendToWaypoints: false, missingRouteTolerance: 5},
+      pointMarkerStyle: {color, fillColor: color},
+      summaryTemplate: `
+        <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
+          ${currentLine.title}
+        </h3>
+      `,
+    }).addTo(this.map);
 
-    this.map.fitBounds(currentLine.coordinates as [number, number][], {maxZoom: 9});
+    this.renderMarker(currentLine.coordinates[0][0], currentLine.coordinates[0][1], currentLine.title, currentLine.description, color);
+    this.renderMarker(currentLine.coordinates[1][0], currentLine.coordinates[1][1], currentLine.title, currentLine.description, color);
+
+    this.map.fitBounds(currentLine.coordinates as [number, number][], {maxZoom: 8});
   }
 
   renderLinesOnMap(color: string) {
-    let coordinatesLines: [number,number][] = [];
+    let coordinatesLines: [number, number][] = [];
 
-    // Add Lines to Layer Group
     this.locations.map((el: any) => {
-      Leaflet.polyline(el.coordinates).bindPopup(`
-        <h3 style='font-size: 18px; text-align: center; font-weight: bold; color: ${color}; margin-bottom: 8px'>
-          ${el.title}
-        </h3>
-        <p style='text-align: center; margin: 0 auto 8px;'>
-          ${el.description}
-        </p>
-      `).addTo(this.layerGroup);
+      let control: Leaflet.Routing.Control = Leaflet.Routing.control({
+        show: false,
+        showAlternatives: false,
+        fitSelectedRoutes: false,
+        routeWhileDragging: true,
+        addWaypoints: false,
+        waypoints: [
+          Leaflet.latLng(el.coordinates[0][0], el.coordinates[0][1]),
+          Leaflet.latLng(el.coordinates[1][0], el.coordinates[1][1]),
+        ],
+        lineOptions: {styles: [{color, opacity: 0.5, weight: 4}], extendToWaypoints: false, missingRouteTolerance: 5},
+        altLineOptions: {styles: [{color, opacity: 0.5, weight: 4}], extendToWaypoints: false, missingRouteTolerance: 5},
+      })
+      .addTo(this.map);
 
-      coordinatesLines.push(el.coordinates);
+      this.controls.push(control);
+
+      this.renderMarker(el.coordinates[0][0], el.coordinates[0][1], el.title, el.description, color);
+      this.renderMarker(el.coordinates[1][0], el.coordinates[1][1], el.title, el.description, color);
+
+      coordinatesLines.push([el.coordinates[0][0], el.coordinates[0][1]]);
+      coordinatesLines.push([el.coordinates[0][0], el.coordinates[1][1]]);
     });
 
-    this.map.fitBounds(coordinatesLines);
+    this.map.fitBounds(coordinatesLines, {maxZoom: 8});
   }
 
   clearMap() {
@@ -189,6 +217,14 @@ export class HomePage {
     }
     if(this.layerGroup) {
       this.layerGroup.clearLayers();
+    }
+    if(this.routing) {
+      this.routing.remove();
+    }
+    if(this.controls) {
+      this.controls.map(control => {
+        this.map.removeControl(control);
+      })
     }
   }
 

@@ -50,13 +50,9 @@
                     [value]="secondSelectedOption"
                     (ionChange)="getSecondOption($event)"
                   >
-                    <ion-select-option value="0" *ngIf="locations"
-                      >الكل</ion-select-option
-                    >
+                    <ion-select-option value="0" *ngIf="locations">الكل</ion-select-option>
                     <ion-select-option
-                      [value]="location.id"
-                      *ngFor="let location of locations"
-                    >
+                      [value]="location.id" *ngFor="let location of locations">
                       {{ location.title }}
                     </ion-select-option>
                   </ion-select>
